@@ -1,5 +1,7 @@
 package com.ibm.cto;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Set;
 
 import com.alibaba.fastjson.JSONArray;
@@ -12,15 +14,15 @@ public class Configuration {
 	public static final String SERVICE_SPEECH_TO_TEXT = "speech_to_text";
 	public static final String SERVICE_TEXT_TO_SPEECH = "text_to_speech";
 	public static final String SERVICE_CONVERSATION = "conversation";
+	public static final String SERVICE_VISUAL_RECOGNITION = "watson_vision";
 	public static final String TOKEN_API_URL = "https://stream.watsonplatform.net/authorization/api/v1/token";
 
 	public String SPEECH_TO_TEXT_API_URL = "https://stream.watsonplatform.net/speech-to-text/api";
 	public String TEXT_TO_SPEECH_API_URL = "https://stream.watsonplatform.net/text-to-speech/api";
 	public String CONVERSATION_API_URL = "https://gateway.watsonplatform.net/conversation/api";
 
-	/**
-	 * TODO: If you're testing this application locally, please get the credentials from Bluemix
-	 */
+	public String APPLICATION_API_URL = "";
+	
 	public String TEXT_TO_SPEECH_USERNAME = "";
 	public String TEXT_TO_SPEECH_PASSWORD = "";
 
@@ -34,6 +36,9 @@ public class Configuration {
 	 * TODO: Get Workspace ID from IBM Watson Conversation: https://ibmwatsonconversation.com
 	 */
 	public String CONVERSATION_WORKSPACE_ID = "";
+	
+	public String VISUAL_RECOGNITION_API_KEY = "";
+	public String VISUAL_RECOGNITION_CLASSIFIER_ID = "";
 
 	/**
 	 * Load credentials and URLs
@@ -41,13 +46,50 @@ public class Configuration {
 	 * @return VCAPConfiguration
 	 */
 	public static Configuration getInstance() {
+
 		if(instance == null) {
 			instance = new Configuration();
-			instance.CONVERSATION_WORKSPACE_ID = System.getenv("CONVERSATION_WORKSPACE_ID");
+			String CONVERSATION_WORKSPACE_STRING = System.getenv("CONVERSATION_WORKSPACE_ID");
 
-			System.out.println("### Conversation Workspace ID ###");
+			if(CONVERSATION_WORKSPACE_STRING == null) {
+				System.out.println("### No environment variables, using default hardcode settings ###");
+
+				// TODO: [Required] Blockchain API Endpoint
+				instance.APPLICATION_API_URL = "https://webchatbot-blockchain.mybluemix.net/api/order/newinfo";
+				// TODO: [Required] Visual Recognition API key and trained classifier ID
+				instance.VISUAL_RECOGNITION_API_KEY = "";
+				instance.VISUAL_RECOGNITION_CLASSIFIER_ID = "";
+
+				// [Optional] If you're testing this application locally, please get the credentials from Bluemix
+				instance.TEXT_TO_SPEECH_USERNAME = "";
+				instance.TEXT_TO_SPEECH_PASSWORD = "";
+				instance.SPEECH_TO_TEXT_USERNAME = "";
+				instance.SPEECH_TO_TEXT_PASSWORD = "";
+				instance.CONVERSATION_USERNAME = "";
+				instance.CONVERSATION_PASSWORD = "";
+				instance.CONVERSATION_WORKSPACE_ID = "";
+
+				return instance;
+			}
+			else {
+				System.out.println("### Using environment settings ###");
+				instance.CONVERSATION_WORKSPACE_ID = CONVERSATION_WORKSPACE_STRING;
+
+				instance.TEXT_TO_SPEECH_USERNAME = System.getenv("TEXT_TO_SPEECH_USERNAME");
+				instance.TEXT_TO_SPEECH_PASSWORD = System.getenv("TEXT_TO_SPEECH_PASSWORD");
+				instance.SPEECH_TO_TEXT_USERNAME = System.getenv("SPEECH_TO_TEXT_USERNAME");
+				instance.SPEECH_TO_TEXT_PASSWORD = System.getenv("SPEECH_TO_TEXT_PASSWORD");
+				instance.CONVERSATION_USERNAME = System.getenv("CONVERSATION_USERNAME");
+				instance.CONVERSATION_PASSWORD = System.getenv("CONVERSATION_PASSWORD");
+				instance.APPLICATION_API_URL = System.getenv("APPLICATION_API_URL");
+				instance.VISUAL_RECOGNITION_API_KEY = System.getenv("VISUAL_RECOGNITION_API_KEY");
+				instance.VISUAL_RECOGNITION_CLASSIFIER_ID = System.getenv("VISUAL_RECOGNITION_CLASSIFIER_ID");
+			}
+
+			System.out.println("### Extra settings from manifest.yml ###");
 			System.out.println(instance.CONVERSATION_WORKSPACE_ID);
-			System.out.println("### /Conversation Workspace ID ###");
+			System.out.println(instance.APPLICATION_API_URL);
+			System.out.println("### /Extra settings from manifest.yml ###");
 
 			JSONObject vcapConfig = getObjectSettings("VCAP_SERVICES");
 
@@ -87,6 +129,9 @@ public class Configuration {
 							instance.TEXT_TO_SPEECH_PASSWORD = serviceCredentials.get("password").toString();
 							instance.TEXT_TO_SPEECH_API_URL = serviceCredentials.get("url").toString();
 						}
+						else if(serviceKey.startsWith(SERVICE_VISUAL_RECOGNITION)) {
+							instance.VISUAL_RECOGNITION_API_KEY = serviceCredentials.get("api_key").toString();
+						}
 						else {
 							System.out.println("### No such key: " + serviceKey);
 						}
@@ -118,5 +163,36 @@ public class Configuration {
 		JSONObject sysEnv = null;
 		sysEnv = JSONObject.parseObject(envServices);
 		return sysEnv;
+	}
+	public String getAppURL() {
+		
+		try {
+			URI url = new URI(instance.APPLICATION_API_URL);
+			return url.getScheme() + "://" + url.getHost();
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "-";
+	}
+	public String getLayout() {
+		if(instance.TEXT_TO_SPEECH_USERNAME == "" ||
+				instance.TEXT_TO_SPEECH_USERNAME == "your_username" ||
+		instance.TEXT_TO_SPEECH_PASSWORD == "" ||
+				instance.TEXT_TO_SPEECH_PASSWORD == "your_password" ||
+		instance.SPEECH_TO_TEXT_USERNAME == "" ||
+				instance.SPEECH_TO_TEXT_USERNAME == "your_username" ||
+		instance.SPEECH_TO_TEXT_PASSWORD == "" ||
+				instance.SPEECH_TO_TEXT_PASSWORD == "your_password" ||
+		instance.CONVERSATION_USERNAME == "" ||
+				instance.CONVERSATION_USERNAME == "your_username" ||
+		instance.CONVERSATION_PASSWORD == "" ||
+				instance.CONVERSATION_PASSWORD == "your_password" ||
+		instance.CONVERSATION_WORKSPACE_ID  == "" || 
+			instance.CONVERSATION_WORKSPACE_ID  == "your_work_space_id") 
+		{
+			return "non-conversation";
+		}
+		return "conversation";
 	}
 }

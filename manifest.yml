@@ -1,7 +1,17 @@
 ---
 applications:
+<<<<<<< HEAD
 - name: mikeChatBot
   path: target/Chatbot-0.0.1.war
   buildpack: liberty-for-java
   env:
     CONVERSATION_WORKSPACE_ID: 13e2e9c8-40cc-49b1-b5ec-448a5cc0974c
+=======
+- name: webchatbot
+  path: target/Chatbot-0.0.2.war
+  buildpack: liberty-for-java
+  env:
+    CONVERSATION_WORKSPACE_ID: 2e38d5ef-7506-4e38-804e-e83f3cbe6926
+    APPLICATION_API_URL: https://webchatbot-blockchain.mybluemix.net/api/order/newinfo
+    VISUAL_RECOGNITION_CLASSIFIER_ID: Coolers_27195735
+>>>>>>> e67e86a78af2c9311292879e06f2fa6f0159f65e
